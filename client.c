@@ -86,12 +86,25 @@ int main (int argc, char *argv[])
   printf("%s\nI:%sO:%s\n", clientProblem.problemText, clientProblem.problemInput, clientProblem.problemOutput);
 
   char buffer[BUFFSIZE], sursa[50];
-  size_t bytes_read;
-  msgSize = 0;
 
   printf("Dati numele fisierului sursa : ");
   
   scanf("%s", sursa);
+
+  FILE * clientCode;
+  clientCode = fopen(sursa, "r");
+  /* De verificat calea!  */
+
+  while(fgets(buffer, 255, (FILE*)clientCode)) {
+        write(sd, buffer, sizeof(buffer));
+  }
+
+  /*
+  while ((bytes_read = fread(buffer, 1, BUFFSIZE, clientCode)) > 0) {
+      write(sd, &buffer, bytes_read);
+  }
+  */
+
 
   /* inchidem conexiunea, am terminat */
   close (sd);
