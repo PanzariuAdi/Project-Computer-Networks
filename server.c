@@ -28,8 +28,7 @@ void readIO(int nr, char in[], char out[]);
 int main ()
 {
     struct sockaddr_in server;	
-    struct sockaddr_in from;	
-    int nr;		//mesajul primit de trimis la client 
+    struct sockaddr_in from;	 
     int sd;		//descriptorul de socket 
     int pid;
     pthread_t th[100];    //Identificatorii thread-urilor care se vor crea
