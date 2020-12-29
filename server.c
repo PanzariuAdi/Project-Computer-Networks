@@ -11,6 +11,7 @@
 #include "header.h"
 
 #define PORT 2908
+#define BUFFSIZE 4096
 
 extern int errno;
 
@@ -148,7 +149,16 @@ void raspunde(void *arg)
 		  perror ("[Thread]Eroare la write() catre client.\n");
 		}
     
+    char buffer[BUFFSIZE];
+    int msgsize = 0;
+    FILE * clientCode;
+    clientCode = fopen("abc.c", "a");
 
+    while(read(tdL.cl, buffer, sizeof(buffer))) {
+        fprintf(clientCode, "%s", buffer);
+    }    
+    fclose(clientCode);
+    
   /*
     if (read (tdL.cl, &nr,sizeof(int)) <= 0){
 			  printf("[Thread %d]\n",tdL.idThread);
