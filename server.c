@@ -9,6 +9,7 @@
 #include <signal.h>
 #include <pthread.h>
 #include "header.h"
+#include <time.h>
 
 #define PORT 2908
 #define BUFFSIZE 4096
@@ -162,7 +163,7 @@ void raspunde(void *arg)
     strcat(fullPath, sursa);
     clientCode = fopen(fullPath, "a");
 
-    printf("Sursa : %s\n", sursa);
+    //printf("Sursa : %s\n", sursa);
 
     while(read(tdL.cl, buffer, sizeof(buffer))) {
         //printf("%s", buffer);
@@ -170,7 +171,11 @@ void raspunde(void *arg)
     }    
     fclose(clientCode);
 
-    //compile();
+    time_t begin = clock();
+    compile(sursa);
+    time_t end = clock();
+
+    double time_spent = (double) (end - begin) / CLOCKS_PER_SEC;
 
   /*
     if (read (tdL.cl, &nr,sizeof(int)) <= 0){
@@ -223,7 +228,21 @@ void readIO(int nr, char in[], char out[]) {
     fclose(output);
 }
 
-int compile() {
-    int r = system("gcc main.c -o main ; ./main");
-    return r;
+int compile(char sursa[]) {
+    char dest[80];
+    int size = strlen(sursa);
+    strcpy(dest, sursa);
+    dest[size - 1] = 'o'; dest[size] = 'u'; dest[size + 1] = 't'; dest[size + 2] = '\0';
+    char command[250];
+    strcpy(command, "cd rezolvari/ ; ");
+    strcat(command, "gcc ");
+    strcat(command, sursa);
+    strcat(command, " -o ");
+    strcat(command, dest);
+    strcat(command, " ; ./");
+    strcat(command, dest);  
+    //printf("compile --> %s\n", command);  
+    int r = system(command);
+    return r; 
+    return 0;
 }
