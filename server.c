@@ -24,6 +24,7 @@ static void *treat(void *);
 void raspunde(void *);
 void initializeProblems();
 void readIO(int nr, char in[], char out[]);
+int compile();
 
 int main ()
 {
@@ -88,9 +89,10 @@ int main ()
       td->idThread=i++;
       td->cl=client;
 
-      pthread_create(&th[i], NULL, &treat, td);	      
-          
-    }//while    
+      pthread_create(&th[i], NULL, &treat, td);
+
+    }//while
+    
 };
 
 
@@ -148,16 +150,28 @@ void raspunde(void *arg)
 		  perror ("[Thread]Eroare la write() catre client.\n");
 		}
     
-    char buffer[BUFFSIZE];
+    char buffer[BUFFSIZE], sursa[50], fullPath[80];
     int msgsize = 0;
     FILE * clientCode;
-    clientCode = fopen("abc.c", "a");
+    
+    if (read (tdL.cl, &sursa, sizeof(sursa)) <= 0) {
+		  printf("[Thread %d] ",tdL.idThread);
+		  perror ("[Thread]Eroare la read() catre client.\n");
+		}
+    strcpy(fullPath, "./rezolvari/");
+    strcat(fullPath, sursa);
+    clientCode = fopen(fullPath, "a");
+
+    printf("Sursa : %s\n", sursa);
 
     while(read(tdL.cl, buffer, sizeof(buffer))) {
+        //printf("%s", buffer);
         fprintf(clientCode, "%s", buffer);
     }    
     fclose(clientCode);
-    
+
+    //compile();
+
   /*
     if (read (tdL.cl, &nr,sizeof(int)) <= 0){
 			  printf("[Thread %d]\n",tdL.idThread);
@@ -207,4 +221,9 @@ void readIO(int nr, char in[], char out[]) {
 
     fclose(input);
     fclose(output);
+}
+
+int compile() {
+    int r = system("gcc main.c -o main ; ./main");
+    return r;
 }

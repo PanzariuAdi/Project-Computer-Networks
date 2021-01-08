@@ -10,7 +10,6 @@
 #include <string.h>
 #include "header.h"
 
-
 #define BUFFSIZE 4096
 
 /* codul de eroare returnat de anumite apeluri */
@@ -95,17 +94,17 @@ int main (int argc, char *argv[])
   clientCode = fopen(sursa, "r");
   /* De verificat calea!  */
 
+  if (write (sd, sursa, sizeof(sursa)) < 0)
+  {
+      perror ("[client]Eroare la read() de la server.\n");
+      return errno;
+  }
+
   while(fgets(buffer, 255, (FILE*)clientCode)) {
         write(sd, buffer, sizeof(buffer));
   }
 
-  /*
-  while ((bytes_read = fread(buffer, 1, BUFFSIZE, clientCode)) > 0) {
-      write(sd, &buffer, bytes_read);
-  }
-  */
-
-
   /* inchidem conexiunea, am terminat */
   close (sd);
 }
+
