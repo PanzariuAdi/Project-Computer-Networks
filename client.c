@@ -103,7 +103,7 @@ int main (int argc, char *argv[])
   while(fgets(buffer, 255, (FILE*)clientCode)) {
         write(sd, buffer, sizeof(buffer));
   }
-
+  
   /* inchidem conexiunea, am terminat */
   close (sd);
 }

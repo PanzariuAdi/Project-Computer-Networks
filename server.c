@@ -26,6 +26,8 @@ void raspunde(void *);
 void initializeProblems();
 void readIO(int nr, char in[], char out[]);
 int compile();
+void evaluate(char sursa[], int problemID);
+int compareFiles(char file1[], char file2[]);
 
 int main ()
 {
@@ -125,7 +127,6 @@ static void *treat(void * arg)
   		
 };
 
-
 void raspunde(void *arg)
 {
     int nr, i=0;
@@ -170,13 +171,14 @@ void raspunde(void *arg)
         fprintf(clientCode, "%s", buffer);
     }    
     fclose(clientCode);
-
+    
     time_t begin = clock();
     compile(sursa);
     time_t end = clock();
 
     double time_spent = (double) (end - begin) / CLOCKS_PER_SEC;
-
+    
+    evaluate(sursa, randNumber);
   /*
     if (read (tdL.cl, &nr,sizeof(int)) <= 0){
 			  printf("[Thread %d]\n",tdL.idThread);
@@ -232,7 +234,7 @@ int compile(char sursa[]) {
     char dest[80];
     int size = strlen(sursa);
     strcpy(dest, sursa);
-    dest[size - 1] = 'o'; dest[size] = 'u'; dest[size + 1] = 't'; dest[size + 2] = '\0';
+    dest[size - 2] = '\0';
     char command[250];
     strcpy(command, "cd rezolvari/ ; ");
     strcat(command, "gcc ");
@@ -244,5 +246,105 @@ int compile(char sursa[]) {
     //printf("compile --> %s\n", command);  
     int r = system(command);
     return r; 
+    return 0;
+}
+
+int execute(char comanda[]) {
+    char command[300];
+    strcpy(command, comanda);
+    int r = system(command);
+    return r;
+}
+
+void evaluate(char sursa[], int problemID) {
+    char problemInput[50], problemOutput[50], clientIn[50], clientOut[50], cpCommand[250];
+    problemInput[0] = '0';
+    problemOutput[0] = '0';
+    problemInput[1] = problemID + '0';
+    problemOutput[1] = problemID + '0';
+    strcat(problemInput, "_1.in");
+    strcat(problemOutput, "_1.out");
+
+    strcpy(clientIn, sursa);
+    strcpy(clientOut, sursa);
+    int size = strlen(sursa);
+
+    clientIn[size - 1] = 'i';
+    clientIn[size] = 'n';
+
+    clientOut[size - 1] = 'o';
+    clientOut[size] = 'u';
+    clientOut[size + 1] = 't';
+  
+    strcpy(cpCommand, "cd IO_Probleme/ ; ");
+    strcat(cpCommand, "cp ");
+    strcat(cpCommand, problemInput);
+    strcat(cpCommand, " ../rezolvari/");
+    execute(cpCommand);
+
+    strcpy(cpCommand, "cd IO_Probleme/ ; ");
+    strcat(cpCommand, "cp ");
+    strcat(cpCommand, problemOutput);
+    strcat(cpCommand, " ../rezolvari/");
+    execute(cpCommand);
+
+    strcpy(cpCommand, "cd rezolvari/ ; ");
+    strcat(cpCommand, "cp ");
+    strcat(cpCommand, problemInput);
+    strcat(cpCommand, " ");
+    strcat(cpCommand, clientIn);
+    execute(cpCommand);
+
+    int result = compareFiles(problemOutput, clientOut);
+    
+    if(result) {
+        printf("Ai dreptate prostule !\n");
+    } else {
+        printf("Esti prost facut gramada !\n");
+    } 
+
+       
+}
+
+int compareFiles(char file1[], char file2[]) {
+    char path1[80], path2[80], buff1[256], buff2[256], rmCommand[100];
+    FILE *pfile1, *pfile2;
+
+    strcpy(path1, "./rezolvari/");
+    strcpy(path2, "./rezolvari/");
+    strcat(path1, file1);
+    strcat(path2, file2);
+
+    //printf("\n%s\n%s\n", path1, path2);
+
+    if( (pfile1 = fopen(path1, "r")) == NULL) {
+        return 0;
+    } else {
+        if( fgets(buff1, 255, pfile1) != NULL) {
+            puts(buff1);
+        }
+    }
+
+    if( (pfile2 = fopen(path2, "r")) == NULL) {
+        return 0;
+    } else {
+        if( fgets(buff2, 255, pfile2) != NULL) {
+            puts(buff2);
+        }
+    }
+
+    fclose(pfile1);
+    fclose(pfile2);
+    
+    strcpy(rmCommand, "rm ");
+    strcat(rmCommand, path1);
+    strcat(rmCommand, " ");
+    strcat(rmCommand, path2);
+    execute(rmCommand);
+
+    if(buff1[strlen(buff1) - 1] == '\n') buff1[strlen(buff1) - 1] = '\0';
+    if(buff2[strlen(buff2) - 1] == '\n') buff2[strlen(buff2) - 1] = '\0'; 
+    
+    if(!strcmp(buff1, buff2)) return 1;
     return 0;
 }
