@@ -28,8 +28,9 @@ void readIO(int nr, char in[], char out[]);
 int compile();
 void evaluate(char sursa[], int problemID);
 int compareFiles(char file1[], char file2[]);
+void removeCommand(char folder[], char file[]);
 
-int main ()
+int main (int argc, char * argv[])
 {
     struct sockaddr_in server;	
     struct sockaddr_in from;	 
@@ -105,7 +106,7 @@ void initializeProblems() {
 
     fp = fopen("cerinte.txt", "r");
 
-    for(int i = 0; i < 3; i++) {
+    for(int i = 0; i < 6; i++) {
         fgets(buff, 1000, (FILE*)fp);
         buff[strlen(buff) - 1] = '\0';
         problems[i].problemID = i;
@@ -133,10 +134,8 @@ void raspunde(void *arg)
 	  struct thData tdL; 
 	  tdL= *((struct thData*)arg);
 	
-    int randNumber = rand() % 3;
+    int randNumber = rand() % 6;
     serverProblem = problems[randNumber];
-
-    printf("%d\n", randNumber);
 
     readIO(randNumber, serverProblem.problemInput, serverProblem.problemOutput);
 
@@ -162,7 +161,7 @@ void raspunde(void *arg)
 		}
     strcpy(fullPath, "./rezolvari/");
     strcat(fullPath, sursa);
-    clientCode = fopen(fullPath, "a");
+    clientCode = fopen(fullPath, "w");
 
     //printf("Sursa : %s\n", sursa);
 
@@ -245,8 +244,7 @@ int compile(char sursa[]) {
     strcat(command, dest);  
     //printf("compile --> %s\n", command);  
     int r = system(command);
-    return r; 
-    return 0;
+    return r;   
 }
 
 int execute(char comanda[]) {
@@ -257,58 +255,83 @@ int execute(char comanda[]) {
 }
 
 void evaluate(char sursa[], int problemID) {
-    char problemInput[50], problemOutput[50], clientIn[50], clientOut[50], cpCommand[250];
+    char problemInput[50], problemOutput[50], clientIn[50], clientOut[50], cpCommand[250], testCase[2];
+    int result;
+
     problemInput[0] = '0';
     problemOutput[0] = '0';
     problemInput[1] = problemID + '0';
     problemOutput[1] = problemID + '0';
-    strcat(problemInput, "_1.in");
-    strcat(problemOutput, "_1.out");
 
-    strcpy(clientIn, sursa);
-    strcpy(clientOut, sursa);
-    int size = strlen(sursa);
-
-    clientIn[size - 1] = 'i';
-    clientIn[size] = 'n';
-
-    clientOut[size - 1] = 'o';
-    clientOut[size] = 'u';
-    clientOut[size + 1] = 't';
-  
-    strcpy(cpCommand, "cd IO_Probleme/ ; ");
-    strcat(cpCommand, "cp ");
-    strcat(cpCommand, problemInput);
-    strcat(cpCommand, " ../rezolvari/");
-    execute(cpCommand);
-
-    strcpy(cpCommand, "cd IO_Probleme/ ; ");
-    strcat(cpCommand, "cp ");
-    strcat(cpCommand, problemOutput);
-    strcat(cpCommand, " ../rezolvari/");
-    execute(cpCommand);
-
-    strcpy(cpCommand, "cd rezolvari/ ; ");
-    strcat(cpCommand, "cp ");
-    strcat(cpCommand, problemInput);
-    strcat(cpCommand, " ");
-    strcat(cpCommand, clientIn);
-    execute(cpCommand);
-
-    int result = compareFiles(problemOutput, clientOut);
     
-    if(result) {
-        printf("Ai dreptate prostule !\n");
-    } else {
-        printf("Esti prost facut gramada !\n");
-    } 
+    for(int i = 1; i < 4; i++) {
+        strcpy(problemInput + 2, "");
+        strcpy(problemOutput + 2, "");
 
-       
+        strcat(problemInput, "_");
+        strcat(problemOutput, "_");
+        testCase[0] = i + '0';
+        strcat(problemInput, testCase);
+        strcat(problemOutput, testCase);
+        strcat(problemInput, ".in");
+        strcat(problemOutput, ".out");
+
+        strcpy(clientIn, sursa);
+        strcpy(clientOut, sursa);
+        int size = strlen(sursa);
+
+        clientIn[size - 1] = 'i';
+        clientIn[size] = 'n';
+
+        clientOut[size - 1] = 'o';
+        clientOut[size] = 'u';
+        clientOut[size + 1] = 't';
+      
+        strcpy(cpCommand, "cd IO_Probleme/ ; ");
+        strcat(cpCommand, "cp ");
+        strcat(cpCommand, problemInput);
+        strcat(cpCommand, " ../rezolvari/");
+        execute(cpCommand);
+
+        strcpy(cpCommand, "cd IO_Probleme/ ; ");
+        strcat(cpCommand, "cp ");
+        strcat(cpCommand, problemOutput);
+        strcat(cpCommand, " ../rezolvari/");
+        execute(cpCommand);
+
+        strcpy(cpCommand, "cd rezolvari/ ; ");
+        strcat(cpCommand, "mv ");
+        strcat(cpCommand, problemInput);
+        strcat(cpCommand, " ");
+        strcat(cpCommand, clientIn);
+        execute(cpCommand);
+
+        /*
+        strcpy(cpCommand, "cd rezolvari/ ; ");
+        strcat(cpCommand, "cp ");
+        strcat(cpCommand, problemOutput);
+        strcat(cpCommand, " ");
+        strcat(cpCommand, clientOut);
+        execute(cpCommand); */
+
+        result = compareFiles(problemOutput, clientOut);
+      
+        if(result == 1) {
+            printf("Corect! !\n");
+        } else {
+            printf("Gresit!\n");
+        }
+
+        //removeCommand("rezolvari/", problemOutput);
+        //removeCommand("rezolvari/", clientOut);
+        //removeCommand("rezolvari/", clientIn); 
+    }   
 }
 
 int compareFiles(char file1[], char file2[]) {
     char path1[80], path2[80], buff1[256], buff2[256], rmCommand[100];
-    FILE *pfile1, *pfile2;
+    FILE *pfile1;
+    FILE *pfile2;
 
     strcpy(path1, "./rezolvari/");
     strcpy(path2, "./rezolvari/");
@@ -324,6 +347,7 @@ int compareFiles(char file1[], char file2[]) {
             puts(buff1);
         }
     }
+    fclose(pfile1);
 
     if( (pfile2 = fopen(path2, "r")) == NULL) {
         return 0;
@@ -332,19 +356,20 @@ int compareFiles(char file1[], char file2[]) {
             puts(buff2);
         }
     }
-
-    fclose(pfile1);
     fclose(pfile2);
-    
-    strcpy(rmCommand, "rm ");
-    strcat(rmCommand, path1);
-    strcat(rmCommand, " ");
-    strcat(rmCommand, path2);
-    execute(rmCommand);
 
     if(buff1[strlen(buff1) - 1] == '\n') buff1[strlen(buff1) - 1] = '\0';
     if(buff2[strlen(buff2) - 1] == '\n') buff2[strlen(buff2) - 1] = '\0'; 
-    
+
     if(!strcmp(buff1, buff2)) return 1;
     return 0;
+}
+
+void removeCommand(char folder[], char file[]) {
+    char command[100];
+    strcpy(command, "cd ");
+    strcat(command, folder);
+    strcat(command, " ; rm ");
+    strcat(command, file);
+    execute(command);
 }
