@@ -170,14 +170,14 @@ void raspunde(void *arg)
         fprintf(clientCode, "%s", buffer);
     }    
     fclose(clientCode);
-    
-    time_t begin = clock();
-    compile(sursa);
-    time_t end = clock();
 
+    time_t begin = clock();
+    evaluate(sursa, randNumber);
+    time_t end = clock(); 
     double time_spent = (double) (end - begin) / CLOCKS_PER_SEC;
     
-    evaluate(sursa, randNumber);
+    //evaluate(sursa, randNumber);
+
   /*
     if (read (tdL.cl, &nr,sizeof(int)) <= 0){
 			  printf("[Thread %d]\n",tdL.idThread);
@@ -235,12 +235,12 @@ int compile(char sursa[]) {
     strcpy(dest, sursa);
     dest[size - 2] = '\0';
     char command[250];
-    strcpy(command, "cd rezolvari/ ; ");
+    strcpy(command, "cd rezolvari/ && ");
     strcat(command, "gcc ");
     strcat(command, sursa);
     strcat(command, " -o ");
     strcat(command, dest);
-    strcat(command, " ; ./");
+    strcat(command, " && ./");
     strcat(command, dest);  
     //printf("compile --> %s\n", command);  
     int r = system(command);
@@ -306,14 +306,16 @@ void evaluate(char sursa[], int problemID) {
         strcat(cpCommand, clientIn);
         execute(cpCommand);
 
+        compile(sursa);
         /*
         strcpy(cpCommand, "cd rezolvari/ ; ");
-        strcat(cpCommand, "cp ");
+        strcat(cpCommand, "touch ");
         strcat(cpCommand, problemOutput);
         strcat(cpCommand, " ");
         strcat(cpCommand, clientOut);
-        execute(cpCommand); */
+        execute(cpCommand);  */
 
+        
         result = compareFiles(problemOutput, clientOut);
       
         if(result == 1) {
@@ -321,10 +323,10 @@ void evaluate(char sursa[], int problemID) {
         } else {
             printf("Gresit!\n");
         }
-
-        //removeCommand("rezolvari/", problemOutput);
-        //removeCommand("rezolvari/", clientOut);
-        //removeCommand("rezolvari/", clientIn); 
+        
+        removeCommand("rezolvari/", problemOutput);
+        removeCommand("rezolvari/", clientOut);
+        removeCommand("rezolvari/", clientIn); 
     }   
 }
 
