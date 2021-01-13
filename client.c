@@ -107,6 +107,19 @@ int main (int argc, char *argv[])
       return errno;
   }
 
+  int data_sent;
+
+  if (read (sd, &data_sent,sizeof(int)) < 0)
+  {
+      perror ("[client]Eroare la read() de la server.\n");
+      return errno;
+  }
+
+  if(data_sent) {
+      printf("Eroare la trimitere fisier. Fisier inexistent sau timp expirat !\n");
+  } else {
+      printf("Trimitere fisier reusita!\n");
+  }
 
   while(fgets(buffer, 255, (FILE*)clientCode) && clientCode != NULL) {
         write(sd, buffer, sizeof(buffer));

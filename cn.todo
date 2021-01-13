@@ -1,0 +1,11 @@
+✔ Server - compilare problema primita de la client intr-un fisier cu numele clientului @done (1/9/2021, 11:01:46 PM)
+✔ Server - evalueaza rezultatul @done (1/13/2021, 12:45:19 AM)
+☐ Server - timpul executiei si timpul in care a fost trimisa
+☐ Server - fisier configurare
+☐ Server - clasament
+
+Evaluare
+    ✔ copiere fisiere IO in rezultate @done (1/10/2021, 1:43:22 AM)
+    ✔ comparare fisiere output @done (1/10/2021, 1:43:24 AM)
+    ✔ stergere fisiere @done (1/13/2021, 12:45:31 AM)
+    

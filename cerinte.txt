@@ -1,0 +1,6 @@
+Se da un numar n. Sa se afiseze primele n numere ale sirului lui Fibonacci.
+Se dau n numere. Sa se afiseze maximul dintre numere.
+Se dau n numere. Sa se afiseze minimul dintre numere.
+Se dau n numere. Sa se afiseze cate numere sunt prime.
+Se da un numar n. Sa se determine suma divizorilor sai.
+Se dă n un număr natural nenul. Să se afle ultima cifră a sumei S=1^4 + 2^4 + 3^4 + ... + n^4.

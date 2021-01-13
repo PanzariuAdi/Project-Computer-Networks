@@ -34,12 +34,12 @@ void clasamentSort();
 void updateScore(int id, int value);
 
 static void *exit_server_f(void * a) {
-    sleep(20);
+    sleep(SERVER_RUN_TIME);
+    printf("Iesire server...\n");
     exit(0);
 }
 
 int currentStudent = -1, contor;
-int bonus[] = {10, 9, 8, 7, 6, 5, 4, 3, 2, 1}, contor_bonus;
 
 int main (int argc, char * argv[])
 {
@@ -126,6 +126,7 @@ void initializeProblems() {
         problems[i].problemID = i;
         strcpy(problems[i].problemText, buff);
     }
+    fclose(fp);
 }
 
 static void *treat(void * arg)
@@ -181,8 +182,10 @@ void raspunde(void *arg)
 		  perror ("[Thread]Eroare la read() catre client.\n");
 		}
 
-    if(!strcmp(sursa, "Invalid")) return;
-
+    if(!strcmp(sursa, "Invalid")) {
+        printf("Clientul a esuat in a trimite fisierul !\n");
+        return;
+    }
     int end_time = time(NULL);
     int problemTime;
     switch (randNumber)
@@ -216,15 +219,14 @@ void raspunde(void *arg)
     }
 
     if((end_time - begin_time) >= problemTime) {
-       printf("GATAAAAAAAAAAAAAAAAAAA\n");
+       printf("Timpul clientului s-a terminat. Acesta nu a reusit sa trimita solutia.\n");
        return;
     }
-
     strcpy(fullPath, "./rezolvari/");
     strcat(fullPath, sursa);
     clientCode = fopen(fullPath, "w");
 
-    //printf("Sursa : %s\n", sursa);
+   //printf("Sursa : %s\n", sursa);
 
     while(read(tdL.cl, buffer, sizeof(buffer))) {
         //printf("%s", buffer);
@@ -240,20 +242,6 @@ void raspunde(void *arg)
     for(int i = 0; i < currentStudent + 1; i++) {
         printf("Nume : %s Punctaj : %d\n", clasamentFinal[i].studentName, clasamentFinal[i].punctaj);
     }
-
-  /*
-    if (read (tdL.cl, &nr,sizeof(int)) <= 0){
-			  printf("[Thread %d]\n",tdL.idThread);
-			  perror ("Eroare la read() de la client.\n");
-		}
-	
-	  printf ("[Thread %d]Mesajul a fost receptionat...%d\n",tdL.idThread, nr);
-		      
-		pregatim mesajul de raspuns 
-		nr++;      
-	  printf("[Thread %d]Trimitem mesajul inapoi...%d\n",tdL.idThread, nr);
-		*/    
-		      /* returnam mesajul clientului */
     
 }
 
@@ -385,16 +373,6 @@ void evaluate(char sursa[], int problemID, int studentID) {
 
         double time_spent = (double) (end - begin) / CLOCKS_PER_SEC;
 
-        //printf("Timp problema : %f\n", time_spent);
-        /*
-        strcpy(cpCommand, "cd rezolvari/ ; ");
-        strcat(cpCommand, "touch ");
-        strcat(cpCommand, problemOutput);
-        strcat(cpCommand, " ");
-        strcat(cpCommand, clientOut);
-        execute(cpCommand);  */
-
-        
         result = compareFiles(problemOutput, clientOut);
       
         if(result == 1) {
@@ -456,8 +434,6 @@ int compareFiles(char file1[], char file2[]) {
     strcpy(path2, "./rezolvari/");
     strcat(path1, file1);
     strcat(path2, file2);
-
-    //printf("\n%s\n%s\n", path1, path2);
 
     if( (pfile1 = fopen(path1, "r")) == NULL) {
         return 0;
