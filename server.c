@@ -9,6 +9,7 @@
 #include <signal.h>
 #include <pthread.h>
 #include "header.h"
+#include "configurare.h"
 #include <time.h>
 
 #define PORT 2908
@@ -26,9 +27,12 @@ void raspunde(void *);
 void initializeProblems();
 void readIO(int nr, char in[], char out[]);
 int compile();
-void evaluate(char sursa[], int problemID);
+void evaluate(char sursa[], int problemID, int studentID);
 int compareFiles(char file1[], char file2[]);
 void removeCommand(char folder[], char file[]);
+void clasamentSort();
+
+int currentStudent = -1, contor;
 
 int main (int argc, char * argv[])
 {
@@ -106,7 +110,7 @@ void initializeProblems() {
 
     fp = fopen("cerinte.txt", "r");
 
-    for(int i = 0; i < 6; i++) {
+    for(int i = 0; i < NR_PROBLEMS; i++) {
         fgets(buff, 1000, (FILE*)fp);
         buff[strlen(buff) - 1] = '\0';
         problems[i].problemID = i;
@@ -130,12 +134,17 @@ static void *treat(void * arg)
 
 void raspunde(void *arg)
 {
+    currentStudent++;
     int nr, i=0;
 	  struct thData tdL; 
 	  tdL= *((struct thData*)arg);
 	
-    int randNumber = rand() % 6;
+    int randNumber = rand() % NR_PROBLEMS;
     serverProblem = problems[randNumber];
+
+    clasamentFinal[currentStudent].idProblem = randNumber;
+    clasamentFinal[currentStudent].idStudent = currentStudent;
+    clasamentFinal[currentStudent].punctaj = 0;
 
     readIO(randNumber, serverProblem.problemInput, serverProblem.problemOutput);
 
@@ -172,11 +181,15 @@ void raspunde(void *arg)
     fclose(clientCode);
 
     time_t begin = clock();
-    evaluate(sursa, randNumber);
+    evaluate(sursa, randNumber, currentStudent);
     time_t end = clock(); 
     double time_spent = (double) (end - begin) / CLOCKS_PER_SEC;
     
-    //evaluate(sursa, randNumber);
+    clasamentSort();
+
+    for(int i = 0; i < currentStudent + 1; i++) {
+        printf("Nume : %s Punctaj : %d\n", clasamentFinal[i].studentName, clasamentFinal[i].punctaj);
+    }
 
   /*
     if (read (tdL.cl, &nr,sizeof(int)) <= 0){
@@ -191,7 +204,7 @@ void raspunde(void *arg)
 	  printf("[Thread %d]Trimitem mesajul inapoi...%d\n",tdL.idThread, nr);
 		*/    
 		      /* returnam mesajul clientului */
-
+    
 }
 
 void readIO(int nr, char in[], char out[]) {
@@ -254,7 +267,7 @@ int execute(char comanda[]) {
     return r;
 }
 
-void evaluate(char sursa[], int problemID) {
+void evaluate(char sursa[], int problemID, int studentID) {
     char problemInput[50], problemOutput[50], clientIn[50], clientOut[50], cpCommand[250], testCase[2];
     int result;
 
@@ -264,7 +277,7 @@ void evaluate(char sursa[], int problemID) {
     problemOutput[1] = problemID + '0';
 
     
-    for(int i = 1; i < 4; i++) {
+    for(int i = 1; i <= NR_TESTS; i++) {
         strcpy(problemInput + 2, "");
         strcpy(problemOutput + 2, "");
 
@@ -286,7 +299,17 @@ void evaluate(char sursa[], int problemID) {
         clientOut[size - 1] = 'o';
         clientOut[size] = 'u';
         clientOut[size + 1] = 't';
-      
+
+        for(int i = 0; i <= currentStudent; i++) {
+            if(clasamentFinal[i].idStudent == studentID) {
+                char tmp[50];
+                strcpy(tmp, clientOut);
+                tmp[strlen(tmp) - 4] = '\0';
+                strcpy(clasamentFinal[i].studentName, tmp);
+                break;
+            }
+        }
+
         strcpy(cpCommand, "cd IO_Probleme/ ; ");
         strcat(cpCommand, "cp ");
         strcat(cpCommand, problemInput);
@@ -319,9 +342,10 @@ void evaluate(char sursa[], int problemID) {
         result = compareFiles(problemOutput, clientOut);
       
         if(result == 1) {
-            printf("Corect! !\n");
+            //printf("Corect! !\n");
+            clasamentFinal[studentID].punctaj += 30;
         } else {
-            printf("Gresit!\n");
+            //printf("Gresit!\n");
         }
         
         removeCommand("rezolvari/", problemOutput);
@@ -374,4 +398,20 @@ void removeCommand(char folder[], char file[]) {
     strcat(command, " ; rm ");
     strcat(command, file);
     execute(command);
+}
+
+void clasamentSort() {
+    int ok  = 0;
+    while(!ok) {
+        ok = 1;
+        for(int i = 0; i < currentStudent; i++) {
+            if(clasamentFinal[i].punctaj < clasamentFinal[i + 1].punctaj) {
+                struct Clasament aux;
+                aux = clasamentFinal[i];
+                clasamentFinal[i] = clasamentFinal[i + 1];
+                clasamentFinal[i + 1] = aux;
+                ok = 0; 
+            }
+        }
+    }
 }
