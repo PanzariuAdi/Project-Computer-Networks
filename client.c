@@ -90,9 +90,16 @@ int main (int argc, char *argv[])
   
   scanf("%s", sursa);
 
+
+
   FILE * clientCode;
   clientCode = fopen(sursa, "r");
-  /* De verificat calea!  */
+
+  if(clientCode == NULL) { 
+      strcpy(sursa, "Fisier invalid");
+      write(sd, "Invalid", sizeof("Invalid"));
+      return errno;      
+  }
 
   if (write (sd, sursa, sizeof(sursa)) < 0)
   {
@@ -100,7 +107,8 @@ int main (int argc, char *argv[])
       return errno;
   }
 
-  while(fgets(buffer, 255, (FILE*)clientCode)) {
+
+  while(fgets(buffer, 255, (FILE*)clientCode) && clientCode != NULL) {
         write(sd, buffer, sizeof(buffer));
   }
   

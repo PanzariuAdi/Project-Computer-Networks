@@ -12,7 +12,7 @@
 #include "configurare.h"
 #include <time.h>
 
-#define PORT 2908
+#define PORT 2909
 #define BUFFSIZE 4096
 
 extern int errno;
@@ -31,11 +31,21 @@ void evaluate(char sursa[], int problemID, int studentID);
 int compareFiles(char file1[], char file2[]);
 void removeCommand(char folder[], char file[]);
 void clasamentSort();
+void updateScore(int id, int value);
+
+static void *exit_server_f(void * a) {
+    sleep(20);
+    exit(0);
+}
 
 int currentStudent = -1, contor;
+int bonus[] = {10, 9, 8, 7, 6, 5, 4, 3, 2, 1}, contor_bonus;
 
 int main (int argc, char * argv[])
 {
+    pthread_t exit_server;
+    pthread_create(&exit_server, NULL, &exit_server_f, NULL);
+
     struct sockaddr_in server;	
     struct sockaddr_in from;	 
     int sd;		//descriptorul de socket 
@@ -123,7 +133,7 @@ static void *treat(void * arg)
 		struct thData tdL; 
 		tdL= *((struct thData*)arg);	
 		//printf ("[thread]- %d - Asteptam mesajul...\n", tdL.idThread);
-		//fflush (stdout);		 
+		//fflush (stdout);		  
 		pthread_detach(pthread_self());		
 		raspunde((struct thData*)arg);
 		/* am terminat cu acest client, inchidem conexiunea */
@@ -164,10 +174,52 @@ void raspunde(void *arg)
     int msgsize = 0;
     FILE * clientCode;
     
+    int begin_time = time(NULL);
+
     if (read (tdL.cl, &sursa, sizeof(sursa)) <= 0) {
 		  printf("[Thread %d] ",tdL.idThread);
 		  perror ("[Thread]Eroare la read() catre client.\n");
 		}
+
+    if(!strcmp(sursa, "Invalid")) return;
+
+    int end_time = time(NULL);
+    int problemTime;
+    switch (randNumber)
+    {
+    case 0:
+      problemTime = MAX_P00_TIME;
+    break;
+
+    case 1:
+      problemTime = MAX_P01_TIME;
+    break;
+
+    case 2:
+      problemTime = MAX_P02_TIME;
+    break;
+
+    case 3:
+      problemTime = MAX_P03_TIME;
+    break;
+
+    case 4:
+      problemTime = MAX_P04_TIME;
+    break;
+
+    case 5:
+      problemTime = MAX_P05_TIME;
+    break;
+
+    default:
+      break;
+    }
+
+    if((end_time - begin_time) >= problemTime) {
+       printf("GATAAAAAAAAAAAAAAAAAAA\n");
+       return;
+    }
+
     strcpy(fullPath, "./rezolvari/");
     strcat(fullPath, sursa);
     clientCode = fopen(fullPath, "w");
@@ -177,14 +229,12 @@ void raspunde(void *arg)
     while(read(tdL.cl, buffer, sizeof(buffer))) {
         //printf("%s", buffer);
         fprintf(clientCode, "%s", buffer);
-    }    
+    } 
     fclose(clientCode);
 
-    time_t begin = clock();
     evaluate(sursa, randNumber, currentStudent);
-    time_t end = clock(); 
-    double time_spent = (double) (end - begin) / CLOCKS_PER_SEC;
-    
+
+
     clasamentSort();
 
     for(int i = 0; i < currentStudent + 1; i++) {
@@ -235,7 +285,7 @@ void readIO(int nr, char in[], char out[]) {
     //printf("O: %s\n", fullPath);
     output = fopen(fullPath, "r");
 
-    fgets(in, 100, (FILE*)input);
+    fgets(in, 100, (FILE*)input);  
     fgets(out, 100, (FILE*)output);
 
     fclose(input);
@@ -276,6 +326,16 @@ void evaluate(char sursa[], int problemID, int studentID) {
     problemInput[1] = problemID + '0';
     problemOutput[1] = problemID + '0';
 
+
+    for(int i = 0; i <= currentStudent; i++) {
+        if(clasamentFinal[i].idStudent == studentID){
+            char tmp[50];
+            strcpy(tmp, sursa);
+            tmp[strlen(tmp) - 2] = '\0';
+            strcpy(clasamentFinal[i].studentName, tmp);
+            break;
+        }
+    }
     
     for(int i = 1; i <= NR_TESTS; i++) {
         strcpy(problemInput + 2, "");
@@ -300,16 +360,6 @@ void evaluate(char sursa[], int problemID, int studentID) {
         clientOut[size] = 'u';
         clientOut[size + 1] = 't';
 
-        for(int i = 0; i <= currentStudent; i++) {
-            if(clasamentFinal[i].idStudent == studentID) {
-                char tmp[50];
-                strcpy(tmp, clientOut);
-                tmp[strlen(tmp) - 4] = '\0';
-                strcpy(clasamentFinal[i].studentName, tmp);
-                break;
-            }
-        }
-
         strcpy(cpCommand, "cd IO_Probleme/ ; ");
         strcat(cpCommand, "cp ");
         strcat(cpCommand, problemInput);
@@ -329,7 +379,13 @@ void evaluate(char sursa[], int problemID, int studentID) {
         strcat(cpCommand, clientIn);
         execute(cpCommand);
 
+        time_t begin = clock();
         compile(sursa);
+        time_t end = clock();
+
+        double time_spent = (double) (end - begin) / CLOCKS_PER_SEC;
+
+        //printf("Timp problema : %f\n", time_spent);
         /*
         strcpy(cpCommand, "cd rezolvari/ ; ");
         strcat(cpCommand, "touch ");
@@ -343,7 +399,44 @@ void evaluate(char sursa[], int problemID, int studentID) {
       
         if(result == 1) {
             //printf("Corect! !\n");
-            clasamentFinal[studentID].punctaj += 30;
+            updateScore(studentID, 25);
+
+            switch (problemID)
+            {
+            case 0:
+              if(time_spent < P00_time)
+                updateScore(studentID, 5);
+            break;
+
+            case 1:
+              if(time_spent < P01_time)
+                updateScore(studentID, 5);
+            break;
+
+            case 2:
+              if(time_spent < P02_time)
+                updateScore(studentID, 5);
+            break;
+
+            case 3:
+              if(time_spent < P03_time)
+                updateScore(studentID, 5);
+            break;
+
+            case 4:
+              if(time_spent < P04_time)
+                updateScore(studentID, 5);
+            break;
+
+            case 5:
+              if(time_spent < P05_time)
+                updateScore(studentID, 5);
+            break;
+            
+            default:
+              break;
+            }
+
         } else {
             //printf("Gresit!\n");
         }
@@ -413,5 +506,15 @@ void clasamentSort() {
                 ok = 0; 
             }
         }
+    }
+}
+
+void updateScore(int id, int value) {
+    for(int i = 0; i <= currentStudent; i++) {
+        if(clasamentFinal[i].idStudent == id) {
+            clasamentFinal[i].punctaj += value;
+            break;
+        }
+
     }
 }
