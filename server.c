@@ -162,7 +162,7 @@ void raspunde(void *arg)
 
     if (write (tdL.cl, &structSize, sizeof(int)) <= 0) {
 		  printf("[Thread %d] ",tdL.idThread);
-		  perror ("[Thread]Eroare la write() catre client.\n");
+		  perror ("[Thread]Eroare la write() catre client.\n"); 
 		} 
 
     if (write (tdL.cl, &serverProblem, structSize) <= 0) {
