@@ -4,8 +4,8 @@
 int n, a, maxim;
 
 int main(int argc, char * argv[]) {
-    FILE *pread = fopen("PanzariuAdi.in", "r");
-    FILE *pwrite = fopen("PanzariuAdi.out", "w");
+    FILE *pread = fopen("PanzariuIonut.in", "r");
+    FILE *pwrite = fopen("PanzariuIonut.out", "w");
     
     if(pread == NULL) return 0;
     if(pwrite == NULL) return 0;

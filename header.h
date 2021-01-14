@@ -10,4 +10,5 @@ struct Clasament {
     int idProblem;
     int punctaj;
     char studentName[50];
+
 } clasamentFinal[50];

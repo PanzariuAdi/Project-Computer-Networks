@@ -39,12 +39,18 @@ static void *exit_server_f(void * a) {
     exit(0);
 }
 
-int currentStudent = -1, contor;
+int currentStudent, contor;
+pthread_mutex_t lock; 
 
 int main (int argc, char * argv[])
 {
     pthread_t exit_server;
     pthread_create(&exit_server, NULL, &exit_server_f, NULL);
+
+    if (pthread_mutex_init(&lock, NULL) != 0) { 
+        printf("\n mutex init has failed\n"); 
+        return 1; 
+    } 
 
     struct sockaddr_in server;	
     struct sockaddr_in from;	 
@@ -96,7 +102,7 @@ int main (int argc, char * argv[])
       if ( (client = accept (sd, (struct sockaddr *) &from, &length)) < 0) {
         perror ("[server]Eroare la accept().\n");
         continue;
-      }
+      } 
     
           /* s-a realizat conexiunea, se astepta mesajul */
       
@@ -110,7 +116,7 @@ int main (int argc, char * argv[])
       pthread_create(&th[i], NULL, &treat, td);
 
     }//while
-    
+    pthread_mutex_destroy(&lock);
 };
 
 
@@ -145,7 +151,7 @@ static void *treat(void * arg)
 
 void raspunde(void *arg)
 {
-    currentStudent++;
+    
     int nr, i=0;
 	  struct thData tdL; 
 	  tdL= *((struct thData*)arg);
@@ -153,9 +159,9 @@ void raspunde(void *arg)
     int randNumber = rand() % NR_PROBLEMS;
     serverProblem = problems[randNumber];
 
-    clasamentFinal[currentStudent].idProblem = randNumber;
-    clasamentFinal[currentStudent].idStudent = currentStudent;
-    clasamentFinal[currentStudent].punctaj = 0;
+    // pthread_mutex_lock(&lock);
+    
+    // pthread_mutex_unlock(&lock); 
 
     readIO(randNumber, serverProblem.problemInput, serverProblem.problemOutput);
 
@@ -177,6 +183,7 @@ void raspunde(void *arg)
     
     int begin_time = time(NULL);
 
+
     if (read (tdL.cl, &sursa, sizeof(sursa)) <= 0) {
 		  printf("[Thread %d] ",tdL.idThread);
 		  perror ("[Thread]Eroare la read() catre client.\n");
@@ -186,6 +193,7 @@ void raspunde(void *arg)
         printf("Clientul a esuat in a trimite fisierul !\n");
         return;
     }
+
     int end_time = time(NULL);
     int problemTime;
     switch (randNumber)
@@ -236,12 +244,12 @@ void raspunde(void *arg)
 
     evaluate(sursa, randNumber, currentStudent);
 
-
     clasamentSort();
 
-    for(int i = 0; i < currentStudent + 1; i++) {
-        printf("Nume : %s Punctaj : %d\n", clasamentFinal[i].studentName, clasamentFinal[i].punctaj);
-    }
+     for(int i = 0; i < currentStudent + 1; i++) {
+        if(strlen(clasamentFinal[i].studentName) > 0)
+         printf("ID : %d Nume : %s Punctaj : %d\n",clasamentFinal[i].idStudent, clasamentFinal[i].studentName, clasamentFinal[i].punctaj);
+     }
     
 }
 
@@ -306,7 +314,7 @@ int execute(char comanda[]) {
 }
 
 void evaluate(char sursa[], int problemID, int studentID) {
-    char problemInput[50], problemOutput[50], clientIn[50], clientOut[50], cpCommand[250], testCase[2];
+    char problemInput[100], problemOutput[100], clientIn[100], clientOut[100], cpCommand[350], testCase[2];
     int result;
 
     problemInput[0] = '0';
@@ -314,6 +322,12 @@ void evaluate(char sursa[], int problemID, int studentID) {
     problemInput[1] = problemID + '0';
     problemOutput[1] = problemID + '0';
 
+    pthread_mutex_lock(&lock);
+    clasamentFinal[currentStudent].punctaj = 0;
+    clasamentFinal[currentStudent].idProblem = problemID;
+    clasamentFinal[currentStudent].idStudent = currentStudent;
+    currentStudent++;
+    pthread_mutex_unlock(&lock);
 
     for(int i = 0; i <= currentStudent; i++) {
         if(clasamentFinal[i].idStudent == studentID){
@@ -343,6 +357,7 @@ void evaluate(char sursa[], int problemID, int studentID) {
 
         clientIn[size - 1] = 'i';
         clientIn[size] = 'n';
+        clientIn[size + 1] = '\0';
 
         clientOut[size - 1] = 'o';
         clientOut[size] = 'u';

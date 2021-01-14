@@ -21,6 +21,5 @@ int main(int argc, char * argv[]) {
     fprintf(pwrite, "%d", maxim);
     fclose(pwrite);
     fclose(pread);
-    printf("\n");
     return 0;
 }
