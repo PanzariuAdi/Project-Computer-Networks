@@ -155,47 +155,10 @@ void raspunde(void *arg)
     int nr, i=0;
 	  struct thData tdL; 
 	  tdL= *((struct thData*)arg);
+    int problemTime;
 	
     int randNumber = rand() % NR_PROBLEMS;
-    serverProblem = problems[randNumber];
 
-    // pthread_mutex_lock(&lock);
-    
-    // pthread_mutex_unlock(&lock); 
-
-    readIO(randNumber, serverProblem.problemInput, serverProblem.problemOutput);
-
-    int structSize = sizeof(serverProblem);
-
-    if (write (tdL.cl, &structSize, sizeof(int)) <= 0) {
-		  printf("[Thread %d] ",tdL.idThread);
-		  perror ("[Thread]Eroare la write() catre client.\n"); 
-		} 
-
-    if (write (tdL.cl, &serverProblem, structSize) <= 0) {
-		  printf("[Thread %d] ",tdL.idThread);
-		  perror ("[Thread]Eroare la write() catre client.\n");
-		}
-    
-    char buffer[BUFFSIZE], sursa[50], fullPath[80];
-    int msgsize = 0;
-    FILE * clientCode;
-    
-    int begin_time = time(NULL);
-
-
-    if (read (tdL.cl, &sursa, sizeof(sursa)) <= 0) {
-		  printf("[Thread %d] ",tdL.idThread);
-		  perror ("[Thread]Eroare la read() catre client.\n");
-		}
-
-    if(!strcmp(sursa, "Invalid")) {
-        printf("Clientul a esuat in a trimite fisierul !\n");
-        return;
-    }
-
-    int end_time = time(NULL);
-    int problemTime;
     switch (randNumber)
     {
     case 0:
@@ -226,6 +189,48 @@ void raspunde(void *arg)
       break;
     }
 
+    serverProblem = problems[randNumber];
+
+
+    readIO(randNumber, serverProblem.problemInput, serverProblem.problemOutput);
+
+    int structSize = sizeof(serverProblem);
+
+  if (write (tdL.cl, &problemTime, sizeof(int)) <= 0) {
+		  printf("[Thread %d] ",tdL.idThread);
+		  perror ("[Thread]Eroare la write() catre client.\n");
+		}
+
+    if (write (tdL.cl, &structSize, sizeof(int)) <= 0) {
+		  printf("[Thread %d] ",tdL.idThread);
+		  perror ("[Thread]Eroare la write() catre client.\n"); 
+		} 
+
+    if (write (tdL.cl, &serverProblem, structSize) <= 0) {
+		  printf("[Thread %d] ",tdL.idThread);
+		  perror ("[Thread]Eroare la write() catre client.\n");
+		}
+    
+    char buffer[BUFFSIZE], sursa[50], fullPath[80];
+    int msgsize = 0;
+    FILE * clientCode;
+    
+    int begin_time = time(NULL);
+
+
+
+    if (read (tdL.cl, &sursa, sizeof(sursa)) <= 0) {
+		  printf("[Thread %d] ",tdL.idThread);
+		  perror ("[Thread]Eroare la read() catre client.\n");
+		}
+
+    if(!strcmp(sursa, "Invalid")) {
+        printf("Clientul a esuat in a trimite fisierul !\n");
+        return;
+    }
+
+    int end_time = time(NULL);
+    
     if((end_time - begin_time) >= problemTime) {
        printf("Timpul clientului s-a terminat. Acesta nu a reusit sa trimita solutia.\n");
        return;
@@ -235,6 +240,7 @@ void raspunde(void *arg)
     clientCode = fopen(fullPath, "w");
 
    //printf("Sursa : %s\n", sursa);
+
 
     while(read(tdL.cl, buffer, sizeof(buffer))) {
         //printf("%s", buffer);

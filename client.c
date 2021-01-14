@@ -22,6 +22,8 @@ int main (int argc, char *argv[])
 {
   int sd, msgSize;;			// descriptorul de socket
   struct sockaddr_in server;	// structura folosita pentru conectare 
+  int timp_problema;
+
   		// mesajul trimis
   int nr=0;
   char buf[10];
@@ -51,23 +53,13 @@ int main (int argc, char *argv[])
     return errno;
   }
 
-  /* citirea mesajului 
-  printf ("[client]Introduceti un numar: ");
-  fflush (stdout);
-  read (0, buf, sizeof(buf));
-  nr=atoi(buf);
-  */
-  //scanf("%d",&nr);
-  
-  //printf("[client] Am citit %d\n",nr);
-
-  /* trimiterea mesajului la server 
-  if (write (sd,&nr,sizeof(int)) <= 0)
-    {
-      perror ("[client]Eroare la write() spre server.\n");
+   if (read (sd, &timp_problema,sizeof(int)) < 0)
+  {
+      perror ("[client]Eroare la read() de la server.\n");
       return errno;
-    }
-*/
+  }
+
+  printf("Timp problema : %d\n", timp_problema);
 
   if (read (sd, &msgSize,sizeof(int)) < 0)
   {
@@ -90,8 +82,6 @@ int main (int argc, char *argv[])
   
   scanf("%s", sursa);
 
-
-
   FILE * clientCode;
   clientCode = fopen(sursa, "r");
 
@@ -106,8 +96,6 @@ int main (int argc, char *argv[])
       perror ("[client]Eroare la read() de la server.\n");
       return errno;
   }
-
-  int data_sent;
 
   while(fgets(buffer, 255, (FILE*)clientCode) && clientCode != NULL) {
         write(sd, buffer, sizeof(buffer));
